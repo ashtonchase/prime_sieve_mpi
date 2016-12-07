@@ -23,28 +23,41 @@ using namespace std;
 #include <sys/time.h>
 #include <mpi.h>
 
+
+/** PRIME_EXIT is value passed to indicated there are not more values to 
+/ distribute from the master to slave processes. 
+*/
 #define PRIME_EXIT (int)-1
+
+/** MPI Tag used for communication
+ */
 #define MARK_PRIME_TAG (int)7
-/* copied from mpbench */
+
+/** Timer related definitions 
+ */
 #define TIMER_CLEAR     (tv1.tv_sec = tv1.tv_usec = tv2.tv_sec = tv2.tv_usec = 0)
 #define TIMER_START     gettimeofday(&tv1, (struct timezone*)0)
-//#define TIMER_ELAPSED   (tv2.tv_sec*1e6 + tv2.tv_usec) - (tv1.tv_sec*1e6 + tv1.tv_usec)
 #define TIMER_ELAPSED   ((tv2.tv_usec-tv1.tv_usec)+((tv2.tv_sec-tv1.tv_sec)*1000000))
 #define TIMER_STOP      gettimeofday(&tv2, (struct timezone*)0)
 struct timeval tv1,tv2;
 
+// highest number passed from the user to check all numbers for prime eligibility 
 int highestNumber;
+// square root of highestNumber
 int rootHighestNumber;
+// pointer for value of the local array size
 int *localArraySize;
+// pointers for arrays of all number and the local processes array
 int *numberArray, *localNumberArray;
+// pointers for arrays indicating whether or not the number is prime
 bool *isPrimeArray, *lclIsPrimeArray;
-
-int numProc, myRank;//MPI Specificics for the number or processess and the rank
+//MPI Specifics for the number or processes and the rank
+int numProc, myRank;
 MPI_Comm   *mpiPrimeComm;
 MPI_Group  *world_group;
 
 /*
-  Routine to retrieve the highest number to search for all lower valued possibilites of prime numbers
+  Routine to retrieve the highest number to search for all lower valued possibilities of prime numbers
 */
 void GetMaxNumber(int argc,char *argv[],int *highestNumber) {
   if(argc!=2) {//if it is not two arguments (including the program name)
@@ -174,7 +187,7 @@ void ComputePrimes(int myRank, int numProc,  int *localArraySize, bool  isPrimeA
 	      lowestIndex++;
 #ifdef DEBUG
 	      cout<<"incrementing lowestIndex"<< lowestIndex;        
-	      cout<<" becuase isPrimeArray[i-lowestIndex]==false=="<<(int)isPrimeArray[z-baseIndex]<<endl;
+	      cout<<" because isPrimeArray[i-lowestIndex]==false=="<<(int)isPrimeArray[z-baseIndex]<<endl;
 #endif
 	    } else { z=highestIndex;}
 	  }
@@ -190,7 +203,7 @@ void ComputePrimes(int myRank, int numProc,  int *localArraySize, bool  isPrimeA
 #endif
          
 	  }
-	  // Trim down the highestIndex as required
+	  // Trim down the highest Index as required
 	  for ( int i=(highestIndex-1); i>lowestIndex; i--){    
 	    if (isPrimeArray[i-baseIndex]==false ){ highestIndex--;} else { break;}
 	  }
@@ -208,7 +221,7 @@ int main( int argc, char *argv[])
 {
   MPI_Comm *mpiPrimeComm_t;
   /* Start MPI Stuffs */
-  MPI_Init(&argc,&argv); // initalize MPI environment
+  MPI_Init(&argc,&argv); // initialize MPI environment
   MPI_Comm_size(MPI_COMM_WORLD,&numProc); // get total number of MPI processes
 #ifdef DEBUG
   cout<<"Number of Processes: "<<numProc<<endl;
@@ -266,10 +279,10 @@ int main( int argc, char *argv[])
 
 
   /*--------Compute Primes, Locally------------*/
-  //In this routine, the lowest rangk will start sending out numbers in groups of 1
-  //that will be prime numbers that subesqunt ranks can mark off.
+  //In this routine, the lowest rank will start sending out numbers in groups of 1
+  //that will be prime numbers that subsequent ranks can mark off.
   //
-  //if rank contains numbers that are less than the square root of the higest number
+  //if rank contains numbers that are less than the square root of the highest number
   //then we will need to do work, sequentially, first letting rank zero complete and
   //signal the next task to begin sending out prime numbers to subsequent processes
   //above it. 
