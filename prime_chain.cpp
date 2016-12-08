@@ -1,24 +1,25 @@
 /******************************************************************/
 /* Prime number generation program              -- MPI Daisy-Chain version */
-/* 6 November 2016
-   /*Copyright 2016 Ashton Johnson, Paul Henny */
+/* 6 November 2016 */
+/*Copyright 2016 Ashton Johnson, Paul Henny */
 /******************************************************************/
-// mm_mult_serial.cpp
+// prime.cpp
 // compilation:
 //   gnu compiler
 //      g++ prime.cpp -o prime -O3 -lm
 // Note: to compile a parallel MPI program version which is named
-//   mm_mult_mpi.cpp
+//   prime_chain.cpp
 //   then execute the following command
 //      gnu compiler
-//         mpic++ mm_mult_mpi.cpp -o mm_mult_MPI_gnu -lm  -O3
+//         mpic++ prime_chain.cpp -o prime_chain -lm  -O3
 /*
-
-  Add comments
+  Daisy-chain data passing model.  The prime to check the data sample
+  is passed to each process after the previous finishes.
 
   To execute:
-  prime max_numb
+  prime_chain max_numb
 */
+
 //#define TESTING
 using namespace std;
 #include <iostream>
@@ -92,7 +93,7 @@ int main( int argc, char *argv[])
   rec_prime = 2;
 
   /*
-    get matrix sizes
+     get matrix sizes
   */
   get_max_number(argc,argv,&highestNumber);
 
@@ -148,7 +149,7 @@ int main( int argc, char *argv[])
   MPI_Bcast(&num_to_send,1,MPI_INT,0,MPI_COMM_WORLD);
 
   if (rank==0) {
-    cout << " num to send " << num_to_send << endl; // Debug
+    cout << "Largest Number:  " << highestNumber << endl; // Debug
     type = 123;
     for(int i=2;i<rootHighestNumber;i++) {
       curr_prime = i;
@@ -157,21 +158,26 @@ int main( int argc, char *argv[])
       if (prime_buf[i]==true){
         //mark all multiples as non-primes
         for (int j=i*2 ; j<num_to_send ; j=j+i){
-	  prime_buf[j]=false;
-	  last_nonprime = j;
+  	       prime_buf[j]=false;
+           last_nonprime = j;
         }
-        // Send what index that was just done to next process, and teh last non prime number
-        MPI_Send(&curr_prime,1,MPI_INT,rank+1,type,MPI_COMM_WORLD);
-        MPI_Send(&last_nonprime,1,MPI_INT,rank+1,type,MPI_COMM_WORLD);
+        if (numtasks>1) {
+          // Send what index that was just done to next process, and teh last non prime number
+          MPI_Send(&curr_prime,1,MPI_INT,rank+1,type,MPI_COMM_WORLD);
+          MPI_Send(&last_nonprime,1,MPI_INT,rank+1,type,MPI_COMM_WORLD);
+        }
       }
     }
     curr_prime = rootHighestNumber+1;
     last_nonprime = rootHighestNumber+1;
-    // Send a large number to indicate that we have done the entire array
-    // This indicates that we are done TESTING
-    // TODO: handle if the last prime is not in the first process's numbers
-    MPI_Send(&curr_prime,1,MPI_INT,rank+1,type,MPI_COMM_WORLD);
-    MPI_Send(&last_nonprime,1,MPI_INT,rank+1,type,MPI_COMM_WORLD);
+    
+    if (numtasks>1) {
+      // Send a large number to indicate that we have done the entire array
+      // This indicates that we are done TESTING
+      // TODO: handle if the last prime is not in the first process's numbers
+      MPI_Send(&curr_prime,1,MPI_INT,rank+1,type,MPI_COMM_WORLD);
+      MPI_Send(&last_nonprime,1,MPI_INT,rank+1,type,MPI_COMM_WORLD);
+    }
   }
   else {
     while(rec_prime<rootHighestNumber) {
@@ -187,8 +193,8 @@ int main( int argc, char *argv[])
 
         //mark all multiples as non-primes
         for(int j=rec_lastnon+rec_prime-(num_to_send*rank); j<num_to_send; j=j+rec_prime) {
-	  prime_buf[j]=false;
-	  rec_lastnon = j+num_to_send*rank;
+           prime_buf[j]=false;
+           rec_lastnon = j+num_to_send*rank;
         }
       }
       // Send the prime and last non-prime to next process, if it isn't the last
@@ -205,8 +211,8 @@ int main( int argc, char *argv[])
     //  if (prime_buf[i]==true)cout<<rank<<" ===== "<<i<<endl;
   }
 
-  /// MPI Gather of primeArray
-  MPI_Gather(prime_buf,num_to_send,MPI::BOOL,isPrimeArray,num_to_send,MPI::BOOL,0,MPI_COMM_WORLD);
+   /// MPI Gather of primeArray
+   MPI_Gather(prime_buf,num_to_send,MPI::BOOL,isPrimeArray,num_to_send,MPI::BOOL,0,MPI_COMM_WORLD);
 
   /*
     stop recording the execution time
