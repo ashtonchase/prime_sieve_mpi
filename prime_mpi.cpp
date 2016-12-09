@@ -22,6 +22,7 @@
 
 /******************************************************************/
 /**
+* Prime number generation program              -- MPI Daisy-Chain version 
 * @file prime_mpi.cpp
 * @author Ashton Johnson, Paul Henny
 * @date 15 October
@@ -31,6 +32,24 @@
 * from the prime number list.                                      
 * 
 */
+// prime.cpp
+// compilation:
+//   gnu compiler
+//      g++ prime.cpp -o prime -O3 -lm
+// Note: to compile a parallel MPI program version which is named
+//   prime_mpi.cpp
+//   then execute the following command
+//      gnu compiler
+//         mpic++ prime_mpi.cpp -o prime_mpi -lm  -O3
+/*
+  Parallel data passing model.  The prime to check the data sample
+  is passed to each process after the previous finishes.
+
+  To execute:
+  prime_mpi max_numb
+*/
+
+
 //#define TESTING
 using namespace std;
 #include <iostream>
