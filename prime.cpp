@@ -7,34 +7,7 @@
 // compilation:
 //   gnu compiler
 //      g++ prime.cpp -o prime -O3 -lm
-// Note: to compile a parallel MPI program version which is named 
-//   mm_mult_mpi.cpp
-//   then execute the following command
-//      gnu compiler
-//         mpic++ mm_mult_mpi.cpp -o mm_mult_MPI_gnu -lm  -O3
-/*
-  This program is designed to perform matrix matrix multiplication
-  A x B = C, where A is an lxm matrix, B is a m x n matrix and
-  C is a l x n matrix. The program is designed to be a template 
-  serial program that can be expanded into a parallel multiprocess
-  and/or a multi-threaded program.
 
-  The program randomly assigns the elements of the A and B matrix
-  with values between 0 and a MAX_VALUE. It then multiples the
-  two matrices with the result being placed in the C matrix.
-  The program prints out the A, B, and C matrices.
-
-  The program is executed using one or three command line parameters.
-  These parameters represent the dimension of the matrices. If only
-  one parameter is used then then it is assumed that square matrices are
-  to be created and multiplied together that have the specified 
-  dimension. In cases where three command line parameters are entered
-  then the first parameter is the l dimension, the second the m, and
-  the third is the n dimension.
-
-  To execute:
-  prime [l_parameter] <m_parameter n_parameter> 
-*/
 //#define TESTING
 using namespace std;
 #include <iostream>
